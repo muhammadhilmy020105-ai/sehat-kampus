@@ -1,0 +1,14 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/style.css"><title>Admin - SehatKampus UIN</title></head><body><div id="nav"></div><main>
+<section class="hero"><div><span class="chip">DASHBOARD ADMIN</span><h1>Rekap SehatKampus</h1></div>
+<div class="stats"><div class="counter">Pengguna<b id="su">0</b></div><div class="counter">Catatan hari ini<b id="sl">0</b></div><div class="counter">Olahraga 7 hari (menit)<b id="sm">0</b></div><div class="counter">Makan terlewat<b id="sk">0</b></div><div class="counter">Tidur siang<b id="sn">0</b></div></div></section>
+<section class="wide"><h2>Pengguna terdaftar</h2><table><thead><tr><th>Nama</th><th>Profesi</th><th>Gender</th><th>Kelas</th><th>NIM/NIDN</th><th>Username</th><th>Daftar</th><th>Catatan</th><th></th></tr></thead><tbody id="users"></tbody></table></section>
+<section class="wide"><h2>Catatan terbaru</h2><table><thead><tr><th>Waktu</th><th>Nama</th><th>Fitur</th><th>Detail</th></tr></thead><tbody id="logs"></tbody></table></section>
+<section class="wide"><h2>QR code halaman ini</h2><img class="qr" src="/qr.png" alt="QR code"><p><a style="color:var(--mint)" href="/qr.png" download="sehatkampus-qr.png">Unduh QR code</a></p></section></main>
+<script src="/js/app.js"></script><script>
+const fmt=d=>new Date(d).toLocaleString('id-ID',{timeZone:'Asia/Jakarta'});
+async function load(){const d=await api('/api/admin/overview');$('#su').textContent=d.users.length;$('#sl').textContent=d.todayLogs;$('#sm').textContent=d.insights.minutes;$('#sk').textContent=d.insights.skipped;$('#sn').textContent=d.insights.naps;
+$('#users').innerHTML=d.users.map(u=>'<tr><td>'+esc(u.name)+'</td><td>'+esc(u.profession)+'</td><td>'+esc(u.gender)+'</td><td>'+esc(u.kelas||'-')+'</td><td>'+esc(u.nim||'-')+'</td><td>'+esc(u.username)+'</td><td>'+fmt(u.createdAt)+'</td><td>'+u.logCount+'</td><td><button class="btn red" data-id="'+u.id+'">Hapus</button></td></tr>').join('')||'<tr><td colspan="9">Belum ada pengguna.</td></tr>';
+$('#logs').innerHTML=d.logs.map(l=>'<tr><td>'+fmt(l.createdAt)+'</td><td>'+esc(l.name)+'</td><td>'+esc(l.habit)+'</td><td>'+Object.entries(l.data).filter(e=>e[1]).map(e=>esc(e[0]+': '+e[1])).join(' · ')+'</td></tr>').join('')||'<tr><td colspan="4">Belum ada catatan.</td></tr>'}
+(async()=>{if(!await initNav({admin:true}))return;load();setInterval(load,15000);
+$('#users').onclick=async e=>{const id=e.target.dataset.id;if(id&&confirm('Hapus pengguna ini beserta catatannya?')){await api('/api/admin/users/'+id,{method:'DELETE'});load()}}})();
+</script></body></html>

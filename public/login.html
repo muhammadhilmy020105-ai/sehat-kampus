@@ -1,0 +1,13 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/style.css"><title>Masuk - SehatKampus UIN</title></head><body><div id="nav"></div>
+<main class="card light split"><div class="photo" role="img" aria-label="Kampus UIN Sumatera Utara"></div><div class="pane">
+<img class="logo" src="/img/logo.jpg" alt="UIN Sumatera Utara Medan"><h1 class="title">Masuk SehatKampus UIN</h1><p class="sub">Gunakan username dan password kamu</p>
+<form id="f"><label>Username</label><input name="username" required autocomplete="username">
+<label>Password</label><input name="password" type="password" required autocomplete="current-password">
+<p id="err" class="err"></p><button class="btn primary full">Masuk</button></form>
+<p class="sub" style="margin-top:18px">Belum punya akun? <a href="/register.html">Daftar</a></p></div></main>
+<script src="/js/app.js"></script><script>
+initNav({guestOnly:true});
+f.onsubmit=async e=>{e.preventDefault();err.textContent='';
+ try{const{user}=await api('/api/login',{method:'POST',body:Object.fromEntries(new FormData(f))});
+ location.href=user.role==='admin'?'/admin.html':'/dashboard.html'}catch(x){err.textContent=x.message}};
+</script></body></html>

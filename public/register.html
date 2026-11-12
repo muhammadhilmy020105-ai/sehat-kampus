@@ -1,0 +1,18 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/style.css"><title>Daftar - SehatKampus UIN</title></head><body><div id="nav"></div>
+<main class="card light"><img class="logo" src="/img/logo.jpg" alt="UIN Sumatera Utara Medan"><h1 class="title">Daftar SehatKampus UIN</h1><p class="sub">Isi data diri, profesi, dan gender kamu dengan benar</p>
+<form id="f"><label>Nama Lengkap</label><input name="name" required maxlength="80">
+<div class="row"><div><label>Profesi</label><select name="profession" id="prof"><option>Mahasiswa</option><option>Dosen</option><option>Staf</option></select></div>
+<div><label>Gender</label><select name="gender"><option>Laki-laki</option><option>Perempuan</option></select></div></div>
+<div id="kw"><label>Kelas <small>(Khusus Mahasiswa)</small></label><input name="kelas" placeholder="Contoh: IF-4A" maxlength="20"></div>
+<label>NIM / NIDN (Opsional)</label><input name="nim" maxlength="30">
+<label>Username</label><input name="username" required autocomplete="username" minlength="3" maxlength="20">
+<label>Password</label><input name="password" type="password" required minlength="6" autocomplete="new-password">
+<p id="err" class="err"></p><button class="btn primary full">Daftar</button></form>
+<p class="sub" style="margin-top:18px">Sudah punya akun? <a href="/login.html">Masuk</a></p></main>
+<script src="/js/app.js"></script><script>
+initNav({guestOnly:true});
+prof.onchange=()=>kw.style.display=prof.value==='Mahasiswa'?'':'none';
+f.onsubmit=async e=>{e.preventDefault();err.textContent='';
+ try{await api('/api/register',{method:'POST',body:Object.fromEntries(new FormData(f))});location.href='/dashboard.html'}
+ catch(x){err.textContent=x.message}};
+</script></body></html>

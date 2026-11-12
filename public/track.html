@@ -1,0 +1,30 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/style.css"><title>Catatan - SehatKampus UIN</title></head><body><div id="nav"></div>
+<main class="card"><h1 class="title" id="title"></h1><p id="intro" style="opacity:.85"></p><p id="note" style="font-size:.9rem;color:var(--mint)"></p>
+<form id="f"><div id="fields"></div><p id="err" class="err" style="color:#fca5a5"></p>
+<button class="btn primary full">Simpan & Kirim ke Admin</button></form>
+<p style="text-align:center"><a href="/dashboard.html" style="color:var(--mint)">← Kembali ke Dashboard</a></p></main>
+<script src="/js/app.js"></script><script>
+const type=new URLSearchParams(location.search).get('type');
+const val=n=>{const o=document.querySelector('.opt.on[data-n="'+n+'"]');if(o)return o.dataset.v;const r=document.querySelector('input[type=radio][name="'+n+'"]:checked');return r?r.value:''};
+const sync=()=>document.querySelectorAll('[data-if]').forEach(d=>d.hidden=val(d.dataset.if)!==d.dataset.eq);
+(async()=>{if(!await initNav({auth:true}))return;
+const h=(await api('/api/habits'))[type];if(!h)return location.href='/dashboard.html';
+document.title=h.title+' - SehatKampus UIN';$('#title').textContent=h.title;$('#intro').textContent=h.intro;
+$('#fields').innerHTML=h.fields.map(x=>'<div class="field"'+(x.showIf?' data-if="'+x.showIf.field+'" data-eq="'+x.showIf.value+'" hidden':'')+'><label>'+x.label+'</label>'+(
+ x.type==='text'?'<textarea data-n="'+x.name+'" rows="4" maxlength="500"></textarea>':
+ x.type==='number'?'<input type="number" min="0" max="100000" data-n="'+x.name+'">':
+ x.type==='cards'?'<div class="cards">'+x.options.map((o,i)=>'<button type="button" class="opt" data-n="'+x.name+'" data-v="'+o+'"><span>'+x.icons[i]+'</span>'+o+'</button>').join('')+'</div>':
+ x.options.map(o=>'<label class="radio"><input type="radio" name="'+x.name+'" value="'+o+'"> '+o+'</label>').join(''))+'</div>').join('');
+document.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+ document.querySelectorAll('.opt[data-n="'+b.dataset.n+'"]').forEach(x=>x.classList.remove('on'));b.classList.add('on');sync()});
+if(h.uniqueBy){const t=await api('/api/logs/today');
+ t.entries.filter(e=>e.type===type).forEach(e=>{const b=document.querySelector('.opt[data-n="'+h.uniqueBy+'"][data-v="'+e.data[h.uniqueBy]+'"]');
+  if(b)b.insertAdjacentHTML('beforeend','<em class="badge">'+(e.data.status==='Terlewat'?'Terlewat':'✓ Tercatat')+'</em>')});
+ $('#note').textContent='Setiap pilihan dicatat sendiri. Menyimpan ulang pilihan yang sama hanya memperbarui catatan itu, pilihan lain tidak berubah.'}
+f.addEventListener('change',sync);
+f.onsubmit=async e=>{e.preventDefault();err.textContent='';const data={};
+ h.fields.forEach(x=>{data[x.name]=x.type==='text'?document.querySelector('textarea[data-n="'+x.name+'"]').value
+  :x.type==='number'?document.querySelector('input[data-n="'+x.name+'"]').value:val(x.name)});
+ try{await api('/api/logs',{method:'POST',body:{type,data}});location.href='/dashboard.html'}catch(x){err.textContent=x.message}};
+})();
+</script></body></html>

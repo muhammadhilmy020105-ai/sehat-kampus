@@ -1,0 +1,20 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/style.css"><title>Dashboard - SehatKampus UIN</title></head><body class="blurbg"><div id="nav"></div><main>
+<section class="hero"><div><span class="chip">DASHBOARD UIN</span><h1>Halo, <span id="name"></span>! 👋</h1><div id="meta"></div></div>
+<div class="counter">Kebiasaan sehat hari ini<b><span id="count">0</span>/6</b></div></section>
+<h2 style="max-width:1100px;margin:30px auto 4px">Track Kebiasaan & Ekosistem Fitur</h2>
+<p style="max-width:1100px;margin:0 auto;opacity:.75">Pilih salah satu menu di bawah untuk mencatat kesehatan harianmu.</p>
+<div class="grid" id="grid"></div>
+<section class="insight"><h2>Insight 7 hari terakhir</h2><div class="stats" id="st"></div><ul id="tips"></ul></section></main>
+<script src="/js/app.js"></script><script>
+(async()=>{const u=await initNav({auth:true});if(!u)return;if(u.role==='admin')return location.href='/admin.html';
+const[h,t,i]=await Promise.all([api('/api/habits'),api('/api/logs/today'),api('/api/insights')]);
+$('#name').textContent=u.name;$('#meta').textContent='Gender: '+u.gender+' | Kelas: '+(u.kelas||'-')+' | NIM/NIDN: '+(u.nim||'-');
+$('#count').textContent=t.done.length;
+const mini=(k,x)=>{if(!x.uniqueBy)return'';const f=x.fields.find(y=>y.name===x.uniqueBy);
+return '<p class="mini">'+f.options.map(o=>{const e=t.entries.find(z=>z.type===k&&z.data[x.uniqueBy]===o);return o+' '+(e?(e.data.status==='Terlewat'?'terlewat':'✓'):'belum')}).join(' · ')+'</p>'};
+$('#grid').innerHTML=Object.entries(h).map(([k,x])=>'<a class="tile" href="/track.html?type='+k+'"><div class="ico">'+x.icon+'</div><h3>'+x.no+'. '+x.title+'</h3><p>'+x.desc+'</p>'+mini(k,x)+(t.done.includes(k)?'<span class="done">✓ Sudah dicatat</span>':'')+'</a>').join('');
+const s=i.stats;
+$('#st').innerHTML=[['Olahraga (menit)',s.minutes],['Makan terlewat',s.skipped],['Makan dengan buah',s.fruit+'/'+s.eaten],['Tidur siang',s.naps]].map(([a,b])=>'<div class="counter">'+a+'<b>'+b+'</b></div>').join('');
+$('#tips').innerHTML=i.tips.map(x=>'<li>'+esc(x)+'</li>').join('');
+})();
+</script></body></html>
