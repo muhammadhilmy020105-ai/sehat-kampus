@@ -54,11 +54,6 @@ const HABITS = {
       { name: 'mood', label: 'Suasana hati', type: 'cards', options: ['Senang', 'Biasa', 'Cemas', 'Sedih'], icons: ['😊', '😐', '😟', '😢'] },
       { name: 'stres', label: 'Tingkat stres', type: 'radio', options: ['Rendah', 'Sedang', 'Tinggi'] },
       { name: 'catatan', label: 'Catatan (opsional)', type: 'text', optional: true }] },
-  report: { no: 6, icon: '📋', title: 'Laporan & Bantuan', desc: 'Sampaikan keluhan atau minta bantuan',
-    intro: 'Pesanmu akan langsung dibaca admin.',
-    fields: [
-      { name: 'jenis', label: 'Jenis pesan', type: 'cards', options: ['Laporan', 'Bantuan'], icons: ['📋', '🆘'] },
-      { name: 'pesan', label: 'Pesan', type: 'text' }] }
 };
 
 const app = express();
@@ -156,11 +151,39 @@ function insights(logs) {
 }
 app.get('/api/insights', needAuth, (req, res) => res.json(insights(db.logs.filter(l => l.userId === me(req).id && l.date >= since()))));
 
+const iso = ms => new Date(ms).toISOString().slice(0, 10);
+const weekStart = w => { const t = new Date(today() + 'T00:00:00Z'); return t.getTime() - (((t.getUTCDay() + 6) % 7) + w * 7) * 864e5; };
+const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const weekLabel = w => {
+  const s = new Date(weekStart(w)), e = new Date(weekStart(w) + 6 * 864e5);
+  return s.getUTCMonth() === e.getUTCMonth()
+    ? `${s.getUTCDate()}–${e.getUTCDate()} ${MONTHS[e.getUTCMonth()]} ${e.getUTCFullYear()}`
+    : `${s.getUTCDate()} ${MONTHS[s.getUTCMonth()]} – ${e.getUTCDate()} ${MONTHS[e.getUTCMonth()]} ${e.getUTCFullYear()}`;
+};
+const KCAL = { 'Jalan Kaki': 4, 'Jogging': 9, 'Senam Ringan': 3, 'Bersepeda': 7 }; // rough kcal per minute
+const INTENSITY = { Ringan: 0.8, Sedang: 1, Berat: 1.25 };
+app.get('/api/report/activity', needAuth, (req, res) => {
+  const wk = Math.min(Math.max(parseInt(req.query.week) || 0, 0), 7);
+  const start = weekStart(wk);
+  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((name, i) => ({ date: iso(start + i * 864e5), name, minutes: 0, steps: 0, kcal: 0, items: [] }));
+  db.logs.filter(l => l.userId === me(req).id && l.type === 'activity').forEach(l => {
+    const d = days.find(x => x.date === l.date); if (!d) return;
+    const m = parseInt(l.data.durasi) || 0;
+    d.minutes += m; d.steps += parseInt(l.data.langkah) || 0;
+    d.kcal += m * (KCAL[l.data.kegiatan] || 4) * (INTENSITY[l.data.intensitas] || 1);
+    d.items.push(`${l.data.kegiatan} ${m} menit`);
+  });
+  const sum = k => days.reduce((a, d) => a + d[k], 0);
+  res.json({ range: weekLabel(wk), goal: 150, days,
+    totals: { steps: sum('steps'), minutes: sum('minutes'), kcal: Math.round(sum('kcal')), activeDays: days.filter(d => d.minutes > 0).length },
+    weeks: [0, 1, 2, 3, 4, 5, 6, 7].map(w => ({ week: w, label: weekLabel(w) })) });
+});
+
 app.get('/api/admin/overview', needAuth, needAdmin, (req, res) => {
   const users = db.users.filter(u => u.role !== 'admin').map(u => ({
     ...pub(u), createdAt: u.createdAt, logCount: db.logs.filter(l => l.userId === u.id).length }));
   const logs = db.logs.slice(-300).reverse().map(l => ({
-    ...l, name: (db.users.find(u => u.id === l.userId) || {}).name || '-', habit: HABITS[l.type].title }));
+    ...l, name: (db.users.find(u => u.id === l.userId) || {}).name || '-', habit: (HABITS[l.type] || { title: 'Pesan lama' }).title }));
   res.json({ users, logs, todayLogs: db.logs.filter(l => l.date === today()).length,
     insights: insights(db.logs.filter(l => l.date >= since())).stats });
 });

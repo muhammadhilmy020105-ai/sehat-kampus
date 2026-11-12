@@ -1,0 +1,51 @@
+<!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/style.css"><title>Laporan & Bantuan - SehatKampus UIN</title></head><body><div id="nav"></div><main>
+<section class="card">
+<div class="rhead"><div><h1 class="title" style="margin:0">Laporan Aktivitas Fisik</h1><small class="note">SehatKampus · Laporan Mingguan</small></div>
+<select id="period" aria-label="Periode laporan"></select></div>
+<div class="rsec"><h3>Ringkasan Aktivitas</h3><div class="sgrid" id="stats"></div>
+<small class="note">Kalori adalah perkiraan kasar dari jenis kegiatan, durasi, dan intensitas, bukan hasil pengukuran. Langkah hanya terhitung jika kamu mengisinya.</small></div>
+<div class="rsec"><h3>Grafik Aktivitas Harian</h3>
+<div class="togs"><button class="tog on" data-m="minutes">Menit</button><button class="tog" data-m="steps">Langkah</button></div><div id="chart"></div></div>
+<div class="rsec"><h3>Rincian Aktivitas</h3><div id="detail"></div></div>
+<div class="rsec"><h3>Pencapaian Mingguan</h3>
+<div class="sbox"><div>🎯 Target 150 menit aktivitas per minggu</div><b><span id="gnum">0</span> <small>/ 150 menit</small></b>
+<div class="track"><i id="gbar" style="width:0"></i></div><span class="badge2" id="gbadge"></span> <small id="gtext"></small></div></div>
+<div class="rsec"><h3>Kesimpulan Mingguan</h3><div class="concl"><h4 id="ctitle"></h4><p id="cbody" style="margin:0"></p></div></div>
+<div class="rbtns"><button class="btn primary" id="copy">Salin Laporan</button><button class="btn" id="dl">Unduh Laporan (.txt)</button></div>
+</section>
+<section class="card"><h1 class="title" style="margin:0 0 10px">Bantuan</h1>
+<p style="margin:0 0 16px">Jika ada kendala saat menggunakan SehatKampus, silakan hubungi email berikut:</p>
+<a class="btn" href="mailto:angginasalsabilla691@gmail.com">✉️ angginasalsabilla691@gmail.com</a>
+<p style="text-align:center;margin:20px 0 0"><a href="/dashboard.html" style="color:var(--mint)">← Kembali ke Dashboard</a></p></section></main>
+<script src="/js/app.js"></script><script>
+let cur=0,R=null,mode='minutes',concl={};
+const nf=n=>Number(n).toLocaleString('id-ID');
+async function load(){R=await api('/api/report/activity?week='+cur);render()}
+function text(){return['LAPORAN AKTIVITAS FISIK - SehatKampus UIN','Periode: '+R.range,'',
+ 'Total langkah: '+nf(R.totals.steps),'Menit aktif: '+R.totals.minutes,'Estimasi kalori: '+nf(R.totals.kcal)+' kkal','Hari beraktivitas: '+R.totals.activeDays+' hari','',
+ ...R.days.map(d=>d.name+': '+d.minutes+' menit'+(d.steps?', '+nf(d.steps)+' langkah':'')),'',
+ 'Target mingguan: '+R.totals.minutes+' / '+R.goal+' menit','Kesimpulan: '+concl.t+' '+concl.b].join('\n')}
+function render(){const t=R.totals,g=R.goal,pct=Math.min(100,Math.round(t.minutes/g*100)),over=t.minutes-g;
+ $('#period').innerHTML=R.weeks.map(w=>'<option value="'+w.week+'"'+(w.week===cur?' selected':'')+'>'+esc(w.label)+(w.week===0?' (minggu ini)':'')+'</option>').join('');
+ $('#stats').innerHTML=[['👣',nf(t.steps),'Total langkah'],['⏱️',t.minutes,'Menit aktif'],['🔥',nf(t.kcal),'Estimasi kalori (kkal)'],['📅',t.activeDays+' hari','Hari beraktivitas']]
+  .map(x=>'<div class="sbox"><span>'+x[0]+'</span><b>'+x[1]+'</b><small>'+x[2]+'</small></div>').join('');
+ const vals=R.days.map(d=>d[mode]),max=Math.max(...vals,1);
+ $('#chart').innerHTML=R.days.map((d,i)=>'<div class="col"><div class="barbox"><div class="bar" style="height:'+(vals[i]/max*100)+'%"></div></div><small>'+nf(vals[i])+'</small><span>'+d.name.slice(0,3)+'</span></div>').join('');
+ document.querySelectorAll('.tog').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
+ const mm=Math.max(...R.days.map(d=>d.minutes),1);
+ $('#detail').innerHTML=R.days.map(d=>'<div class="rowd"><div class="rt"><b>'+d.name+'</b><small>'+(d.steps?nf(d.steps)+' langkah':d.minutes?'Langkah tidak dicatat':'Belum ada catatan')+'</small></div><div class="track"><i style="width:'+(d.minutes/mm*100)+'%"></i></div><small>'+d.minutes+' menit'+(d.items.length?' · '+esc(d.items.join(', ')):'')+'</small></div>').join('');
+ $('#gnum').textContent=t.minutes;$('#gbar').style.width=pct+'%';
+ $('#gbadge').textContent=over>=0?'Target tercapai!':'Belum tercapai';$('#gbadge').classList.toggle('no',over<0);
+ $('#gtext').textContent=over>0?'Kamu telah melampaui target sebanyak '+over+' menit.':over===0?'Tepat mencapai target.':'Kurang '+(-over)+' menit lagi dari target.';
+ concl=pct>=100?{t:'Aktivitas minggu ini bagus!',b:'Pertahankan rutinitas olahraga dan usahakan bergerak aktif setiap hari. Jangan lupa memberikan waktu istirahat yang cukup bagi tubuh.'}
+  :pct>=50?{t:'Sedikit lagi mencapai target.',b:'Tambahkan beberapa sesi singkat 10–15 menit agar target mingguan tercapai.'}
+  :t.minutes>0?{t:'Aktivitasmu masih bisa ditingkatkan.',b:'Mulai dari jalan kaki 10–15 menit setiap hari, lalu tambah pelan-pelan.'}
+  :{t:'Belum ada aktivitas tercatat.',b:'Catat kegiatanmu di menu Aktivitas Fisik agar laporan ini terisi.'};
+ $('#ctitle').textContent='🏆 '+concl.t;$('#cbody').textContent=concl.b}
+(async()=>{if(!await initNav({auth:true}))return;
+ $('#period').onchange=e=>{cur=+e.target.value;load()};
+ document.querySelectorAll('.tog').forEach(b=>b.onclick=()=>{mode=b.dataset.m;render()});
+ $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(text());$('#copy').textContent='✓ Tersalin'}catch{alert('Gagal menyalin. Gunakan tombol Unduh.')}setTimeout(()=>$('#copy').textContent='Salin Laporan',2000)};
+ $('#dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text()],{type:'text/plain;charset=utf-8'}));a.download='laporan-aktivitas-fisik.txt';a.click()};
+ await load()})();
+</script></body></html>
