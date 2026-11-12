@@ -1,51 +1,120 @@
 <!doctype html><html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/css/style.css"><title>Laporan & Bantuan - SehatKampus UIN</title></head><body><div id="nav"></div><main>
-<section class="card">
-<div class="rhead"><div><h1 class="title" style="margin:0">Laporan Aktivitas Fisik</h1><small class="note">SehatKampus · Laporan Mingguan</small></div>
-<select id="period" aria-label="Periode laporan"></select></div>
-<div class="rsec"><h3>Ringkasan Aktivitas</h3><div class="sgrid" id="stats"></div>
-<small class="note">Kalori adalah perkiraan kasar dari jenis kegiatan, durasi, dan intensitas, bukan hasil pengukuran. Langkah hanya terhitung jika kamu mengisinya.</small></div>
-<div class="rsec"><h3>Grafik Aktivitas Harian</h3>
-<div class="togs"><button class="tog on" data-m="minutes">Menit</button><button class="tog" data-m="steps">Langkah</button></div><div id="chart"></div></div>
-<div class="rsec"><h3>Rincian Aktivitas</h3><div id="detail"></div></div>
-<div class="rsec"><h3>Pencapaian Mingguan</h3>
-<div class="sbox"><div>🎯 Target 150 menit aktivitas per minggu</div><b><span id="gnum">0</span> <small>/ 150 menit</small></b>
+<section class="card"><div class="rhead"><div><h1 class="title" style="margin:0">Laporan Mingguan</h1><small class="note">SehatKampus · semua kebiasaan sehatmu</small></div>
+<select id="period" aria-label="Periode laporan"></select></div></section>
+
+<section class="card"><h1 class="title" style="margin:0 0 6px">🏃 Aktivitas Fisik</h1>
+<div class="sgrid" id="stats"></div>
+<small class="note">Kalori adalah perkiraan kasar dari jenis kegiatan, durasi, dan intensitas, bukan hasil pengukuran. Langkah hanya terhitung jika kamu mengisinya.</small>
+<div class="rsec"><h3>Grafik Harian</h3><div class="togs"><button class="tog on" data-m="minutes">Menit</button><button class="tog" data-m="steps">Langkah</button></div><div class="chart" id="chart"></div></div>
+<div class="rsec"><h3>Rincian</h3><div id="detail"></div></div>
+<div class="rsec"><h3>Pencapaian Mingguan</h3><div class="sbox"><div>🎯 Target 150 menit aktivitas per minggu</div><b><span id="gnum">0</span> <small>/ 150 menit</small></b>
 <div class="track"><i id="gbar" style="width:0"></i></div><span class="badge2" id="gbadge"></span> <small id="gtext"></small></div></div>
-<div class="rsec"><h3>Kesimpulan Mingguan</h3><div class="concl"><h4 id="ctitle"></h4><p id="cbody" style="margin:0"></p></div></div>
-<div class="rbtns"><button class="btn primary" id="copy">Salin Laporan</button><button class="btn" id="dl">Unduh Laporan (.txt)</button></div>
-</section>
+<div class="rsec"><h3>Kesimpulan</h3><div class="concl" id="aconc"></div></div></section>
+
+<section class="card"><h1 class="title" style="margin:0 0 6px">💧 Pengingat Minum</h1>
+<div class="sgrid" id="wstats"></div><small class="note">Patokan umum 8 gelas per hari. Kebutuhan tiap orang bisa berbeda.</small>
+<div class="rsec"><h3>Gelas per Hari</h3><div class="chart" id="wchart"></div></div>
+<div class="rsec"><h3>Kesimpulan</h3><div class="concl" id="wconc"></div></div></section>
+
+<section class="card"><h1 class="title" style="margin:0 0 6px">🌙 Catatan Tidur</h1>
+<div class="sgrid" id="sstats"></div><small class="note">Orang dewasa umumnya disarankan tidur malam sedikitnya 7 jam.</small>
+<div class="rsec"><h3>Rincian Harian</h3><div id="stable"></div></div>
+<div class="rsec"><h3>Kesimpulan</h3><div class="concl" id="sconc"></div></div></section>
+
+<section class="card"><h1 class="title" style="margin:0 0 6px">🍽️ Pola Makan</h1>
+<div class="sgrid" id="mstats"></div><small class="note">🍎 = ada buah, 🥬 = ada sayur, ✓ = sudah makan.</small>
+<div class="rsec"><h3>Rincian Harian</h3><div id="mtable"></div></div>
+<div class="rsec"><h3>Kesimpulan</h3><div class="concl" id="mconc"></div></div></section>
+
+<section class="card"><h1 class="title" style="margin:0 0 6px">🧠 Kesehatan Mental</h1>
+<div class="sgrid" id="nstats"></div>
+<div class="rsec"><h3>Rincian Harian</h3><div id="ntable"></div></div>
+<div class="rsec"><h3>Kesimpulan</h3><div class="concl" id="nconc"></div></div></section>
+
+<section class="card"><div class="rbtns" style="margin:0"><button class="btn primary" id="copy">Salin Semua Laporan</button><button class="btn" id="dl">Unduh Semua Laporan (.txt)</button></div></section>
+
 <section class="card"><h1 class="title" style="margin:0 0 10px">Bantuan</h1>
 <p style="margin:0 0 16px">Jika ada kendala saat menggunakan SehatKampus, silakan hubungi email berikut:</p>
 <a class="btn" href="mailto:angginasalsabilla691@gmail.com">✉️ angginasalsabilla691@gmail.com</a>
 <p style="text-align:center;margin:20px 0 0"><a href="/dashboard.html" style="color:var(--mint)">← Kembali ke Dashboard</a></p></section></main>
 <script src="/js/app.js"></script><script>
-let cur=0,R=null,mode='minutes',concl={};
+let cur=0,A=null,H=null,mode='minutes',txt='';
 const nf=n=>Number(n).toLocaleString('id-ID');
-async function load(){R=await api('/api/report/activity?week='+cur);render()}
-function text(){return['LAPORAN AKTIVITAS FISIK - SehatKampus UIN','Periode: '+R.range,'',
- 'Total langkah: '+nf(R.totals.steps),'Menit aktif: '+R.totals.minutes,'Estimasi kalori: '+nf(R.totals.kcal)+' kkal','Hari beraktivitas: '+R.totals.activeDays+' hari','',
- ...R.days.map(d=>d.name+': '+d.minutes+' menit'+(d.steps?', '+nf(d.steps)+' langkah':'')),'',
- 'Target mingguan: '+R.totals.minutes+' / '+R.goal+' menit','Kesimpulan: '+concl.t+' '+concl.b].join('\n')}
-function render(){const t=R.totals,g=R.goal,pct=Math.min(100,Math.round(t.minutes/g*100)),over=t.minutes-g;
- $('#period').innerHTML=R.weeks.map(w=>'<option value="'+w.week+'"'+(w.week===cur?' selected':'')+'>'+esc(w.label)+(w.week===0?' (minggu ini)':'')+'</option>').join('');
- $('#stats').innerHTML=[['👣',nf(t.steps),'Total langkah'],['⏱️',t.minutes,'Menit aktif'],['🔥',nf(t.kcal),'Estimasi kalori (kkal)'],['📅',t.activeDays+' hari','Hari beraktivitas']]
-  .map(x=>'<div class="sbox"><span>'+x[0]+'</span><b>'+x[1]+'</b><small>'+x[2]+'</small></div>').join('');
- const vals=R.days.map(d=>d[mode]),max=Math.max(...vals,1);
- $('#chart').innerHTML=R.days.map((d,i)=>'<div class="col"><div class="barbox"><div class="bar" style="height:'+(vals[i]/max*100)+'%"></div></div><small>'+nf(vals[i])+'</small><span>'+d.name.slice(0,3)+'</span></div>').join('');
+const box=a=>a.map(x=>'<div class="sbox"><span>'+x[0]+'</span><b>'+x[1]+'</b><small>'+x[2]+'</small></div>').join('');
+const table=(head,body)=>'<div class="tw"><table><thead><tr>'+head.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>'+body.map(r=>'<tr>'+r.map(c=>'<td>'+c+'</td>').join('')+'</tr>').join('')+'</tbody></table></div>';
+const bars=(el,names,vals)=>{const max=Math.max(...vals,1);$(el).innerHTML=names.map((n,i)=>'<div class="col"><div class="barbox"><div class="bar" style="height:'+(vals[i]/max*100)+'%"></div></div><small>'+nf(vals[i])+'</small><span>'+n.slice(0,3)+'</span></div>').join('')};
+const concl=(id,t,b)=>{$('#'+id).innerHTML='<h4>'+esc(t)+'</h4><p style="margin:0">'+esc(b)+'</p>';return t+' '+b};
+const EMO={Senang:'😊',Biasa:'😐',Cemas:'😟',Sedih:'😢'};
+async function load(){[A,H]=await Promise.all([api('/api/report/activity?week='+cur),api('/api/report/habits?week='+cur)]);render()}
+
+function render(){const t=A.totals,g=A.goal,pct=Math.min(100,Math.round(t.minutes/g*100)),over=t.minutes-g,names=A.days.map(d=>d.name),L=[];
+ $('#period').innerHTML=A.weeks.map(w=>'<option value="'+w.week+'"'+(w.week===cur?' selected':'')+'>'+esc(w.label)+(w.week===0?' (minggu ini)':'')+'</option>').join('');
+ L.push('LAPORAN MINGGUAN - SehatKampus UIN','Periode: '+A.range,'');
+
+ // Aktivitas fisik
+ $('#stats').innerHTML=box([['👣',nf(t.steps),'Total langkah'],['⏱️',t.minutes,'Menit aktif'],['🔥',nf(t.kcal),'Estimasi kalori (kkal)'],['📅',t.activeDays+' hari','Hari beraktivitas']]);
+ const vals=A.days.map(d=>d[mode]);bars('#chart',names,vals);
  document.querySelectorAll('.tog').forEach(b=>b.classList.toggle('on',b.dataset.m===mode));
- const mm=Math.max(...R.days.map(d=>d.minutes),1);
- $('#detail').innerHTML=R.days.map(d=>'<div class="rowd"><div class="rt"><b>'+d.name+'</b><small>'+(d.steps?nf(d.steps)+' langkah':d.minutes?'Langkah tidak dicatat':'Belum ada catatan')+'</small></div><div class="track"><i style="width:'+(d.minutes/mm*100)+'%"></i></div><small>'+d.minutes+' menit'+(d.items.length?' · '+esc(d.items.join(', ')):'')+'</small></div>').join('');
+ const mm=Math.max(...A.days.map(d=>d.minutes),1);
+ $('#detail').innerHTML=A.days.map(d=>'<div class="rowd"><div class="rt"><b>'+d.name+'</b><small>'+(d.steps?nf(d.steps)+' langkah':d.minutes?'Langkah tidak dicatat':'Belum ada catatan')+'</small></div><div class="track"><i style="width:'+(d.minutes/mm*100)+'%"></i></div><small>'+d.minutes+' menit'+(d.items.length?' · '+esc(d.items.join(', ')):'')+'</small></div>').join('');
  $('#gnum').textContent=t.minutes;$('#gbar').style.width=pct+'%';
  $('#gbadge').textContent=over>=0?'Target tercapai!':'Belum tercapai';$('#gbadge').classList.toggle('no',over<0);
  $('#gtext').textContent=over>0?'Kamu telah melampaui target sebanyak '+over+' menit.':over===0?'Tepat mencapai target.':'Kurang '+(-over)+' menit lagi dari target.';
- concl=pct>=100?{t:'Aktivitas minggu ini bagus!',b:'Pertahankan rutinitas olahraga dan usahakan bergerak aktif setiap hari. Jangan lupa memberikan waktu istirahat yang cukup bagi tubuh.'}
-  :pct>=50?{t:'Sedikit lagi mencapai target.',b:'Tambahkan beberapa sesi singkat 10–15 menit agar target mingguan tercapai.'}
-  :t.minutes>0?{t:'Aktivitasmu masih bisa ditingkatkan.',b:'Mulai dari jalan kaki 10–15 menit setiap hari, lalu tambah pelan-pelan.'}
-  :{t:'Belum ada aktivitas tercatat.',b:'Catat kegiatanmu di menu Aktivitas Fisik agar laporan ini terisi.'};
- $('#ctitle').textContent='🏆 '+concl.t;$('#cbody').textContent=concl.b}
+ const ac=pct>=100?['Aktivitas minggu ini bagus!','Pertahankan rutinitas olahraga dan usahakan bergerak aktif setiap hari. Jangan lupa memberikan waktu istirahat yang cukup bagi tubuh.']
+  :pct>=50?['Sedikit lagi mencapai target.','Tambahkan beberapa sesi singkat 10–15 menit agar target mingguan tercapai.']
+  :t.minutes>0?['Aktivitasmu masih bisa ditingkatkan.','Mulai dari jalan kaki 10–15 menit setiap hari, lalu tambah pelan-pelan.']
+  :['Belum ada aktivitas tercatat.','Catat kegiatanmu di menu Aktivitas Fisik agar laporan ini terisi.'];
+ L.push('== AKTIVITAS FISIK ==','Total langkah: '+nf(t.steps),'Menit aktif: '+t.minutes+' / '+g,'Estimasi kalori: '+nf(t.kcal)+' kkal','Hari beraktivitas: '+t.activeDays,
+  ...A.days.map(d=>d.name+': '+d.minutes+' menit'+(d.steps?', '+nf(d.steps)+' langkah':'')),'Kesimpulan: '+concl('aconc',...ac),'');
+
+ // Minum
+ const w=H.days.map(d=>d.water),tw=w.reduce((a,b)=>a+b,0),wd=w.filter(x=>x>0).length,wok=w.filter(x=>x>=8).length,avg=wd?tw/wd:0;
+ $('#wstats').innerHTML=box([['💧',tw,'Total gelas'],['📊',avg.toFixed(1),'Rata-rata gelas/hari tercatat'],['✅',wok+' hari','Hari mencapai 8 gelas'],['📅',wd+' hari','Hari tercatat']]);
+ bars('#wchart',names,w);
+ const wc=!wd?['Belum ada catatan minum.','Catat air putih yang kamu minum di menu Pengingat Minum.']
+  :avg>=8?['Hidrasi minggu ini sangat baik!','Rata-rata minummu sudah mencapai 8 gelas per hari. Pertahankan.']
+  :['Minummu masih bisa ditambah.','Rata-rata '+avg.toFixed(1)+' gelas per hari tercatat. Coba bawa botol minum agar lebih dekat ke 8 gelas.'];
+ L.push('== PENGINGAT MINUM ==','Total gelas: '+tw,'Rata-rata: '+avg.toFixed(1)+' gelas/hari tercatat','Hari mencapai 8 gelas: '+wok,...H.days.map((d,i)=>d.name+': '+w[i]+' gelas'),'Kesimpulan: '+concl('wconc',...wc),'');
+
+ // Tidur
+ const nights=H.days.map(d=>d.sleep['Tidur Malam']).filter(Boolean),naps=H.days.map(d=>d.sleep['Tidur Siang']).filter(Boolean);
+ const good=nights.filter(n=>/^(7|Lebih)/.test(n.durasi)).length,nyenyak=[...nights,...naps].filter(n=>n.kualitas==='Nyenyak').length;
+ $('#sstats').innerHTML=box([['🌙',nights.length,'Tidur malam tercatat'],['✅',good,'Malam tidur 7 jam atau lebih'],['☀️',naps.length,'Tidur siang'],['😴',nyenyak,'Tidur nyenyak']]);
+ const sline=(n)=>n?esc(n.durasi)+(n.kualitas?' · '+esc(n.kualitas):''):'–';
+ $('#stable').innerHTML=table(['Hari','Tidur malam','Tidur siang'],H.days.map(d=>[d.name,sline(d.sleep['Tidur Malam']),sline(d.sleep['Tidur Siang'])]));
+ const sc=!nights.length?['Belum ada catatan tidur malam.','Catat tidurmu di menu Catatan Tidur.']
+  :good/nights.length>=0.7?['Tidur malammu cukup baik minggu ini.',good+' dari '+nights.length+' malam tercatat tidur 7 jam atau lebih.']
+  :['Tidur malammu masih kurang.','Hanya '+good+' dari '+nights.length+' malam yang mencapai 7 jam. Coba tidur lebih awal dan kurangi layar sebelum tidur.'];
+ L.push('== CATATAN TIDUR ==','Tidur malam tercatat: '+nights.length,'Malam 7 jam atau lebih: '+good,'Tidur siang: '+naps.length,...H.days.map(d=>d.name+': malam '+(d.sleep['Tidur Malam']?d.sleep['Tidur Malam'].durasi:'-')+', siang '+(d.sleep['Tidur Siang']?d.sleep['Tidur Siang'].durasi:'-')),'Kesimpulan: '+concl('sconc',...sc),'');
+
+ // Makan
+ const M=['Sarapan','Makan Siang','Makan Malam'],all=H.days.flatMap(d=>M.map(m=>d.meal[m]).filter(Boolean));
+ const eaten=all.filter(m=>m.status!=='Terlewat'),skipped=all.length-eaten.length,fruit=eaten.filter(m=>m.buah==='Ya').length,veg=eaten.filter(m=>m.sayur==='Ya').length;
+ const skipB=H.days.filter(d=>d.meal.Sarapan&&d.meal.Sarapan.status==='Terlewat').length;
+ $('#mstats').innerHTML=box([['🍽️',eaten.length,'Makan tercatat'],['⏭️',skipped,'Makan terlewat'],['🍎',fruit+'/'+eaten.length,'Makan dengan buah'],['🥬',veg+'/'+eaten.length,'Makan dengan sayur']]);
+ const cell=m=>!m?'–':m.status==='Terlewat'?'Terlewat':'✓'+(m.buah==='Ya'?' 🍎':'')+(m.sayur==='Ya'?' 🥬':'');
+ $('#mtable').innerHTML=table(['Hari',...M],H.days.map(d=>[d.name,...M.map(m=>cell(d.meal[m]))]));
+ const mc=!all.length?['Belum ada catatan makan.','Catat sarapan, makan siang, dan makan malammu di menu Pola Makan.']
+  :skipB?['Sarapan terlewat '+skipB+' kali.','Coba siapkan sarapan sederhana agar energimu terjaga sepanjang hari.']
+  :eaten.length&&fruit*2<eaten.length?['Buah masih sedikit.','Buah baru ada di '+fruit+' dari '+eaten.length+' waktu makan. Coba tambahkan buah di beberapa waktu makan.']
+  :['Pola makanmu cukup teratur.','Pertahankan jadwal makan dan tambahkan buah serta sayur setiap hari.'];
+ L.push('== POLA MAKAN ==','Makan tercatat: '+eaten.length,'Makan terlewat: '+skipped,'Dengan buah: '+fruit+'/'+eaten.length,'Dengan sayur: '+veg+'/'+eaten.length,
+  ...H.days.map(d=>d.name+': '+M.map(m=>m.replace('Makan ','')+' '+cell(d.meal[m]).replace(/ [🍎🥬]/gu,'')).join(', ')),'Kesimpulan: '+concl('mconc',...mc),'');
+
+ // Mental
+ const ms=H.days.flatMap(d=>d.mood),happy=ms.filter(m=>m.mood==='Senang').length,neg=ms.filter(m=>m.mood==='Cemas'||m.mood==='Sedih').length,hs=ms.filter(m=>m.stres==='Tinggi').length;
+ $('#nstats').innerHTML=box([['📝',ms.length,'Catatan'],['😊',happy,'Catatan senang'],['😟',neg,'Catatan cemas/sedih'],['⚡',hs,'Stres tinggi']]);
+ $('#ntable').innerHTML=table(['Hari','Suasana hati & stres'],H.days.map(d=>[d.name,d.mood.length?d.mood.map(m=>(EMO[m.mood]||'')+' '+esc(m.mood)+' · stres '+esc((m.stres||'').toLowerCase())).join('<br>'):'–']));
+ const nc=!ms.length?['Belum ada catatan suasana hati.','Catat perasaanmu di menu Kesehatan Mental.']
+  :(neg>=3||hs>=3)?['Beberapa hari terasa berat.','Beri dirimu waktu istirahat, ceritakan ke teman atau keluarga, dan pertimbangkan bicara dengan tenaga profesional bila perasaan ini berlanjut.']
+  :['Suasana hatimu cukup stabil minggu ini.','Tetap luangkan waktu untuk hal yang kamu sukai dan istirahat yang cukup.'];
+ L.push('== KESEHATAN MENTAL ==','Catatan: '+ms.length+' (senang '+happy+', cemas/sedih '+neg+', stres tinggi '+hs+')',...H.days.map(d=>d.name+': '+(d.mood.length?d.mood.map(m=>m.mood+'/stres '+(m.stres||'').toLowerCase()).join('; '):'-')),'Kesimpulan: '+concl('nconc',...nc));
+ txt=L.join('\n')}
+
 (async()=>{if(!await initNav({auth:true}))return;
  $('#period').onchange=e=>{cur=+e.target.value;load()};
  document.querySelectorAll('.tog').forEach(b=>b.onclick=()=>{mode=b.dataset.m;render()});
- $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(text());$('#copy').textContent='✓ Tersalin'}catch{alert('Gagal menyalin. Gunakan tombol Unduh.')}setTimeout(()=>$('#copy').textContent='Salin Laporan',2000)};
- $('#dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text()],{type:'text/plain;charset=utf-8'}));a.download='laporan-aktivitas-fisik.txt';a.click()};
+ $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(txt);$('#copy').textContent='✓ Tersalin'}catch{alert('Gagal menyalin. Gunakan tombol Unduh.')}setTimeout(()=>$('#copy').textContent='Salin Semua Laporan',2000)};
+ $('#dl').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));a.download='laporan-mingguan-sehatkampus.txt';a.click()};
  await load()})();
 </script></body></html>

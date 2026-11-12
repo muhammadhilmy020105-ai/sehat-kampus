@@ -179,6 +179,20 @@ app.get('/api/report/activity', needAuth, (req, res) => {
     weeks: [0, 1, 2, 3, 4, 5, 6, 7].map(w => ({ week: w, label: weekLabel(w) })) });
 });
 
+app.get('/api/report/habits', needAuth, (req, res) => {
+  const start = weekStart(Math.min(Math.max(parseInt(req.query.week) || 0, 0), 7));
+  const days = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'].map((name, i) => ({ date: iso(start + i * 864e5), name, water: 0, sleep: {}, meal: {}, mood: [] }));
+  db.logs.filter(l => l.userId === me(req).id).forEach(l => {
+    const d = days.find(x => x.date === l.date); if (!d) return;
+    const x = l.data;
+    if (l.type === 'water') d.water += parseInt(x.jumlah) || 0;
+    else if (l.type === 'sleep') d.sleep[x.jenis] = { durasi: x.durasi_malam || x.durasi_siang || '', kualitas: x.kualitas || '' };
+    else if (l.type === 'meal') d.meal[x.waktu] = { status: x.status || 'Sudah makan', buah: x.buah || '', sayur: x.sayur || '' };
+    else if (l.type === 'mental') d.mood.push({ mood: x.mood, stres: x.stres });
+  });
+  res.json({ days });
+});
+
 app.get('/api/admin/overview', needAuth, needAdmin, (req, res) => {
   const users = db.users.filter(u => u.role !== 'admin').map(u => ({
     ...pub(u), createdAt: u.createdAt, logCount: db.logs.filter(l => l.userId === u.id).length }));
